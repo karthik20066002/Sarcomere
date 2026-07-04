@@ -30,9 +30,12 @@ int main(int argc, char** argv) {
     BVHParser parser;
     Skeleton skeleton = parser.createNewSkeleton(name, index);
     std::cout << "Skeleton created with Name: " << name << " and Index: " << index << std::endl;
-    parser.parseBVHfile("example.bvh", skeleton);
+    MotionData motionData = parser.parseBVHfile("example.bvh", skeleton);
     std::cout << "Skeleton: " << skeleton.name << " with Index: " << skeleton.index << " has " << skeleton.joints.size() << " joints." << std::endl;
-    parser.PrintSkeleton(skeleton);
-    std::cout << std::endl; 
+    parser.PrintSkeleton(skeleton, motionData);
+    std::cout << std::endl;
+    std::cout << "Motion Data: " << motionData.frameCount << " frames, Frame Time: " << motionData.frameTime << " seconds." << std::endl;
+    std::vector<std::vector<float>> frameData = motionData.motionValues;
+    std::cout << std::endl;
     return 0;
-}
+};

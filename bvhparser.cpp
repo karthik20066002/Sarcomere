@@ -15,13 +15,13 @@ int BVHParser::addJointToSkeleton(Skeleton& skeleton, const Joint& joint) {
     skeleton.addJoint(joint);
     return 0;
 }
-void BVHParser::parseBVHfile(const std::string& filename, Skeleton& skeleton, int parentIndex)
+MotionData BVHParser::parseBVHfile(const std::string& filename, Skeleton& skeleton, int parentIndex)
 {
     std::cout << "Parsing BVH file: " << filename << std::endl;
     std::ifstream stream(filename, std::ios::in);
     if (!stream.is_open()) {
         std::cerr << "Error opening BVH file: " << filename << std::endl;
-        return;
+        return MotionData(0, 0.0f, {});
     }
     int totalFrames = 0;
     double frameTime = 0;
@@ -33,9 +33,10 @@ void BVHParser::parseBVHfile(const std::string& filename, Skeleton& skeleton, in
     std::string token, rootName;
     bool endSite = false;
     std::stack<int> parentStack;
+    MotionData motionData(0, 0.0f, {});
 
     while (std::getline(stream, line)) {
-        std::cout << line << std::endl;
+        std::cout << line << "\n";
         if (line.find("HIERARCHY") != std::string::npos) {
             std::cout << "Found HIERARCHY section." << std::endl;
         }
@@ -102,33 +103,33 @@ void BVHParser::parseBVHfile(const std::string& filename, Skeleton& skeleton, in
         }
         else if (line.find("Frames:") != std::string::npos) {
             std::istringstream iss(line);
-            iss >> token >> totalFrames;
-            std::cout << "Found Frames: " << totalFrames << std::endl;
+            iss >> token >> motionData.frameCount;
+            std::cout << "Found Frames: " << motionData.frameCount << std::endl;
         }
         else if (line.find("Frame Time:") != std::string::npos) {
             std::istringstream iss(line);
-            iss >> token >> token >> frameTime;
-            std::cout << "Found Frame Time: " << frameTime << std::endl;
+            iss >> token >> token >> motionData.frameTime;
+            std::cout << "Found Frame Time: " << motionData.frameTime << std::endl;
         }
         else if (line.find_first_of("0123456789-") != std::string::npos) {
             std::cout << "Found Frame Data: " << line << std::endl;
             std::istringstream iss(line);
-            std::vector<float> frameData;
-            float value;
-            while (iss >> value) {
-                frameData.push_back(value);
+            std::vector<float> temp;
+            while (iss >> token) {
+                temp.push_back(std::stof(token));
             }
-            std::cout << "Frameline:";
-            for (size_t i = 0; i < frameData.size(); ++i) {
-                std::cout << frameData[i] << " ";
-            }
-            std::vector<std::vector<float>> jointFrameData(skeleton.joints.size());
+            motionData.motionValues.push_back(temp);
+
+
+            currentFrame++;
             std::cout << std::endl;
         }
     };
+    return motionData;
 }
-void BVHParser::PrintSkeleton(const Skeleton& skeleton)
-{
+void BVHParser::PrintSkeleton(const Skeleton& skeleton, const MotionData& motionData)
+{   
+    size_t offset = 0;
     std::cout << "Skeleton Name: " << skeleton.name << std::endl;
     std::cout << "Skeleton Index: " << skeleton.index << std::endl;
     std::cout << "Number of Joints: " << skeleton.joints.size() << std::endl;
@@ -148,7 +149,13 @@ void BVHParser::PrintSkeleton(const Skeleton& skeleton)
             case Channel::RotZ: std::cout << "RotZ "; break;
             }
         }
-        
+        for (int i = 0; i < motionData.motionValues.size(); ++i) {
+            for (int j = 0; j < joint.channels.size(); ++j) {
+                std::cout << joint.name << ": " << motionData.motionValues[i][j+offset] << " ";
+            }
+         }
+        offset += joint.channels.size();
+
         std::cout << std::endl;
     }
 }

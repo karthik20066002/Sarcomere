@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.11)
 
 project(BVHParser)
 
-add_executable(BVHParser main.cpp bvhparser.cpp joint.cpp skeleton.cpp)
+add_executable(BVHParser main.cpp bvhparser.cpp skeleton.cpp)
 
 target_include_directories(BVHParser PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
